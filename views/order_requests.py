@@ -1,6 +1,7 @@
 import time
+import json
 import sqlite3
-from models import Metal
+from models import Order
 
 ORDERS = [
     {
@@ -27,20 +28,46 @@ def get_all_orders():
         conn.row_factory = sqlite3.Row
         db_cursor = conn.cursor()
 
+        db_cursor.execute("""
+        SELECT
+            o.id,
+            o.metal_id,
+            o.size_id,
+            o.style_id
+        FROM Orders o
+        """)
+
+        orders = []
+
+        dataset = db_cursor.fetchall()
+
+        for row in dataset:
+            order = Order(row['id'], row['metal_id'], row['size_id'], row['style_id'])
+            orders.append(order.__dict__)
+    return orders
 
 
 # Function with a single parameter
 def get_single_order(id):
-    """gets one order
-    """
+    """gets one order"""
+    with sqlite3.connect("./kneeldiamonds.sqlite3") as conn:
+        conn.row_factory = sqlite3.Row
+        db_cursor = conn.cursor()
 
-    requested_order = None
+        db_cursor.execute("""
+        SELECT
+            o.id,
+            o.metal_id,
+            o.size_id,
+            o.style_id
+        FROM Orders o
+        WHERE o.id = ?
+        """, (id, ))
 
-    for order in ORDERS:      
-        if order["id"] == id:
-            requested_order = order
+        data = db_cursor.fetchone()
+        order = Order(data['id'], data['metal_id'], data['size_id'], data['style_id'])
 
-    return requested_order
+        return order.__dict__
 
 def create_order(order):
     """creates one order
